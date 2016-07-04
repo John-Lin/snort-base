@@ -5,21 +5,22 @@ MAINTAINER John Lin <linton.tw@gmail.com>
 
 RUN apt-get update && \
     apt-get install -y \
-        python-setuptools \
-        python-pip \
-        python-dev \
         wget \
         build-essential \
+        # Pre-requisites for Snort DAQ (Data AcQuisition library)
         bison \
         flex \
+        # Pre-Requisites for snort
         libpcap-dev \
         libpcre3-dev \
         libdumbnet-dev \
+        # Additional required pre-requisite for Snort
         zlib1g-dev \
-        iptables-dev \
-        libnetfilter-queue1 \
-        tcpdump \
-        vim && pip install -U pip
+        # Optional libraries that improves fuctionality
+        liblzma-dev \
+        openssl \
+        libssl-dev && \
+    rm -rf /var/lib/apt/lists/*
 
 # Define working directory.
 WORKDIR /opt
@@ -44,24 +45,18 @@ ADD mysnortrules /opt
 RUN mkdir -p /var/log/snort && \
     mkdir -p /usr/local/lib/snort_dynamicrules && \
     mkdir -p /etc/snort && \
-
-
     # mysnortrules rules
     cp -r /opt/rules /etc/snort/rules && \
     # Due to empty folder so mkdir
     mkdir -p /etc/snort/preproc_rules && \
     mkdir -p /etc/snort/so_rules && \
     cp -r /opt/etc /etc/snort/etc && \
-
     # touch /etc/snort/rules/local.rules && \
     touch /etc/snort/rules/white_list.rules /etc/snort/rules/black_list.rules
 
 # Clean up APT when done.
-RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
+RUN apt-get clean && rm -rf /tmp/* /var/tmp/* \
     /opt/snort-${SNORT_VERSION}.tar.gz /opt/daq-${DAQ_VERSION}.tar.gz
 
-
-ENV NETWORK_INTERFACE eth0
 # Validate an installation
-# snort -T -i eth0 -c /etc/snort/etc/snort.conf
-CMD ["snort", "-T", "-i", "echo ${NETWORK_INTERFACE}", "-c", "/etc/snort/etc/snort.conf"]
+CMD ["snort", "-V"]
